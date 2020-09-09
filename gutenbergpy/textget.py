@@ -7,6 +7,8 @@ from urllib.request import urlopen
 from urllib.parse import urlparse
 from gutenbergpy.gutenbergcachesettings import GutenbergCacheSettings
 
+import requests
+
 ##
 # MARKERS ARE FROM https://github.com/c-w/Gutenberg/blob/master/gutenberg/_domain_model/text.py
 
@@ -97,7 +99,7 @@ TEXT_END_MARKERS = frozenset((
 
 LEGALESE_START_MARKERS = frozenset(("<<THIS ELECTRONIC VERSION OF",))
 LEGALESE_END_MARKERS = frozenset(("SERVICE THAT CHARGES FOR DOWNLOAD",))
-
+_GUTENBERG_MIRROR = 'http://aleph.gutenberg.org'
 
 ##
 # adapted from https://github.com/c-w/Gutenberg/blob/master/gutenberg/acquire/text.py
@@ -117,7 +119,7 @@ def _format_download_uri(index):
     Raises:
         UnknownDownloadUri: If no download location can be found for the text.
     """
-    uri_root = r'http://www.gutenberg.lib.md.us'
+    uri_root = _GUTENBERG_MIRROR
     extensions = ('.txt', '-8.txt', '-0.txt')
     for extension in extensions:
         path = get_text_dir_from_index(index)
@@ -145,9 +147,14 @@ def get_text_by_id(index):
         except OSError as ex:
             if ex.errno != errno.EEXIST:
                 raise
-        download_uri = _format_download_uri(index)
 
-        text = urlopen(download_uri).read().decode('cp1252')
+        download_uri = _format_download_uri(index)
+        response = requests.get(download_uri)
+
+        if response.encoding != response.apparent_encoding:
+            response.encoding = response.apparent_encoding
+        text = response.text
+
         with closing(gzip.open(file_cache_location, 'w')) as cache:
             cache.write(text.encode('utf-8'))
 
