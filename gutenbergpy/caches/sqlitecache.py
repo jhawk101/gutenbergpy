@@ -41,14 +41,14 @@ class SQLiteCache(Cache):
     def __insert_many_field(self, table, field, theSet):
         if len(theSet):
             query = 'INSERT OR IGNORE INTO %s(%s) VALUES (?)' % (table,field)
-            self.cursor.executemany(query,map(lambda x: (x,) , theSet))
+            self.cursor.executemany(query,[(x,) for x in theSet])
 
     ##
     # Insert many 2 fields helper function
     def __insert_many_field_id(self, table, field1, field2, theSet):
         if len(theSet):
             query = 'INSERT OR IGNORE INTO %s(%s, %s) VALUES (?,?)' % (table,field1,field2)
-            insert_array = map(lambda x: (x[0],x[1]) , theSet)
+            insert_array = [(x[0],x[1]) for x in theSet]
             self.cursor.executemany(query,insert_array)
 
     ##
@@ -74,7 +74,7 @@ class SQLiteCache(Cache):
                 self.__insert_many_field('downloadlinkstype', 'name', pt.setTypes)
                 self.cursor.executemany(
                     'INSERT OR IGNORE INTO downloadlinks(name,bookid,downloadtypeid) VALUES (?,?,?)'
-                    , map(lambda x: (x[0], x[1], x[2]), parse_results.field_sets[Fields.FILES].setLinks))
+                    , [(x[0], x[1], x[2]) for x in parse_results.field_sets[Fields.FILES].setLinks])
 
             elif pt.needs_book_id():
                 self.__insert_many_field_id(self.table_map[idx], 'name', 'bookid', pt.set)
@@ -87,8 +87,8 @@ class SQLiteCache(Cache):
         for idx, book in enumerate(parse_results.books):
             Utils.update_progress_bar("SQLite progress" ,idx,total)
             book_id = idx +1
-            self.__insertLinks(map(lambda x: (x,book_id) , book.authors_id),'book_authors','authorid','bookid')
-            self.__insertLinks(map(lambda x: (x,book_id) , book.subjects_id),'book_subjects','subjectid','bookid')
+            self.__insertLinks([(x,book_id) for x in book.authors_id],'book_authors','authorid','bookid')
+            self.__insertLinks([(x,book_id) for x in book.subjects_id],'book_subjects','subjectid','bookid')
 
             self.cursor.execute("INSERT OR IGNORE INTO books(publisherid,dateissued,rightsid,numdownloads,languageid,bookshelveid,gutenbergbookid,typeid) "
                                 "VALUES (?,?,?,?,?,?,?,?)" , (book.publisher_id, book.date_issued, book.rights_id,
@@ -113,28 +113,28 @@ class SQLiteCache(Cache):
                 self.query_struct   = query_struct
         helpers=[
             HelperQuery(['languages'], ('languages.id = books.languageid', 'languages.name',
-                        kwargs['languages'] if kwargs.has_key('languages') else None)),
+                        kwargs['languages'] if 'languages' in kwargs else None)),
             HelperQuery(['authors', 'book_authors'],
                         ('authors.id = book_authors.authorid and books.id = book_authors.bookid', 'authors.name',
-                         kwargs['authors'] if kwargs.has_key('authors') else None)),
+                         kwargs['authors'] if 'authors' in kwargs else None)),
             HelperQuery(['types'],('books.typeid = types.id', 'types.name',
-                         kwargs['types'] if kwargs.has_key('types') else None)),
+                         kwargs['types'] if 'types' in kwargs else None)),
             HelperQuery(['titles'],('titles.bookid = books.id', 'titles.name',
-                         kwargs['titles'] if kwargs.has_key('titles') else None)),
+                         kwargs['titles'] if 'titles' in kwargs else None)),
             HelperQuery(['subjects', 'book_subjects'],
                         ('subjects.id = book_subjects.bookid and books.id = book_subjects.subjectid ', 'subjects.name',
-                         kwargs['subjects'] if kwargs.has_key('subjects') else None)),
+                         kwargs['subjects'] if 'subjects' in kwargs else None)),
             HelperQuery(['publishers'],
                         ('publishers.id = books.publisherid', 'publishers.name',
-                         kwargs['publishers'] if kwargs.has_key('publishers') else None)),
+                         kwargs['publishers'] if 'publishers' in kwargs else None)),
             HelperQuery(['bookshelves'],
                         ('bookshelves.id = books.bookshelveid', 'bookshelves.name',
-                         kwargs['bookshelves'] if kwargs.has_key('bookshelves') else None)),
+                         kwargs['bookshelves'] if 'bookshelves' in kwargs else None)),
             HelperQuery(['downloadlinks','downloadlinkstype'],
                         ('downloadlinks.downloadtypeid =  downloadlinkstype.id and downloadlinks.bookid = books.id', 'downloadlinkstype.name',
-                         kwargs['downloadtype'] if kwargs.has_key('downloadtype') else None))
+                         kwargs['downloadtype'] if 'downloadtype' in kwargs else None))
         ]
-        runtime  = list(filter(lambda x: x.query_struct[2] , helpers))
+        runtime  = list([x for x in helpers if x.query_struct[2]])
 
         query = "SELECT DISTINCT books.gutenbergbookid FROM books"
         for q in runtime:
@@ -142,7 +142,7 @@ class SQLiteCache(Cache):
         query = "%s WHERE " % query
 
         for idx,q in enumerate(runtime):
-            query = "%s %s and %s in (%s) " % (query,q.query_struct[0],q.query_struct[1],','.join(map(lambda x: "'%s'"%(str(x)), q.query_struct[2])))
+            query = "%s %s and %s in (%s) " % (query,q.query_struct[0],q.query_struct[1],','.join(["'%s'"%(str(x)) for x in q.query_struct[2]]))
             if idx != len(runtime) -1:
                 query = "%s and " % query
 

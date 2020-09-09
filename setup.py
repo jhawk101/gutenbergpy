@@ -20,4 +20,4 @@ setup(
     description='Library to create and interogate local cache for Project Gutenberg',
     long_description=open('README.rst').read(),
     include_package_data=True,
-    install_requires=['future>=0.15.2','setuptools>=18.5','lxml>=3.2.0'] )
+    install_requires=['future>=0.15.2','setuptools>=18.5','lxml>=3.2.0', 'pymongo >= 2.9, < 3.0'] )

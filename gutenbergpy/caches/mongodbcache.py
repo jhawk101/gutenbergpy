@@ -27,10 +27,10 @@ class MongodbCache(Cache):
         book_dict['date_issued']    = parseItem.date_issued
         book_dict['num_downloads']  = parseItem.num_downloads
 
-        book_dict['titles']         = map(lambda x: x[0] , fields[Fields.TITLE].set[[x - 1 for x in parseItem.titles_id]])  if parseItem.titles_id and parseItem.titles_id != -1 else ['None']
-        book_dict['subjects']       = map(lambda x: x , fields[Fields.SUBJECT].set[[x - 1 for x in parseItem.subjects_id]]) if parseItem.subjects_id and parseItem.subjects_id != -1 else ['None']
-        book_dict['authors']        = map(lambda x: x , fields[Fields.AUTHOR].set[[x - 1 for x in parseItem.authors_id]]) if parseItem.authors_id and parseItem.authors_id != -1 else ['None']
-        book_dict['files']          = map(lambda x: x[0] , fields[Fields.FILES].setLinks[[x - 1 for x in parseItem.files_id]]) if parseItem.files_id and parseItem.files_id != -1 else ['None']
+        book_dict['titles']         = [x[0] for x in fields[Fields.TITLE].set[[x - 1 for x in parseItem.titles_id]]]  if parseItem.titles_id and parseItem.titles_id != -1 else ['None']
+        book_dict['subjects']       = [x for x in fields[Fields.SUBJECT].set[[x - 1 for x in parseItem.subjects_id]]] if parseItem.subjects_id and parseItem.subjects_id != -1 else ['None']
+        book_dict['authors']        = [x for x in fields[Fields.AUTHOR].set[[x - 1 for x in parseItem.authors_id]]] if parseItem.authors_id and parseItem.authors_id != -1 else ['None']
+        book_dict['files']          = [x[0] for x in fields[Fields.FILES].setLinks[[x - 1 for x in parseItem.files_id]]] if parseItem.files_id and parseItem.files_id != -1 else ['None']
         book_dict['type']           = fields[Fields.TYPE].set[parseItem.type_id-1]  if parseItem.type_id and parseItem.type_id != -1 else 'None'
         return book_dict
     ##
@@ -46,7 +46,7 @@ class MongodbCache(Cache):
             self.db.books.insert_one(json)
 
     def create_or_dict(self,name,newname, dt,out):
-        if dt.has_key(name):
+        if name in dt:
             dict = {}
             lst = []
             for e in dt[name]:

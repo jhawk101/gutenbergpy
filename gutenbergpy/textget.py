@@ -1,14 +1,10 @@
-# -*- coding: utf-8 -*-
-# encoding=utf8 
-from __future__ import absolute_import, unicode_literals
-
 import gzip
 import os
 import errno
-import httplib
+import http.client as httplib
 from contextlib import closing
-from urllib import urlopen
-from urlparse import urlparse
+from urllib.request import urlopen
+from urllib.parse import urlparse
 from gutenbergpy.gutenbergcachesettings import GutenbergCacheSettings
 
 ##
@@ -157,7 +153,7 @@ def get_text_by_id(index):
 
     with closing(gzip.open(file_cache_location, 'r')) as cache:
         text = cache.read().decode('utf-8')
-    return text.encode('utf-8')
+    return text
 
 
 ##
@@ -176,7 +172,7 @@ def strip_headers(text):
 
         if i <= 600:
             # Check if the header ends here
-            if any(line.startswith(token.encode('utf-8')) for token in TEXT_START_MARKERS):
+            if any(line.startswith(token) for token in TEXT_START_MARKERS):
                 reset = True
 
             # If it's the end of the header, delete the output produced so far.
@@ -188,17 +184,17 @@ def strip_headers(text):
 
         if i >= 100:
             # Check if the footer begins here
-            if any(line.startswith(token.encode('utf-8')) for token in TEXT_END_MARKERS):
+            if any(line.startswith(token) for token in TEXT_END_MARKERS):
                 footer_found = True
 
             # If it's the beginning of the footer, stop output
             if footer_found:
                 break
 
-        if any(line.startswith(token.encode('utf-8')) for token in LEGALESE_START_MARKERS):
+        if any(line.startswith(token) for token in LEGALESE_START_MARKERS):
             ignore_section = True
             continue
-        elif any(line.startswith(token.encode('utf-8')) for token in LEGALESE_END_MARKERS):
+        elif any(line.startswith(token) for token in LEGALESE_END_MARKERS):
             ignore_section = False
             continue
 
